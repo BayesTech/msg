@@ -1,0 +1,14 @@
+{
+    "packageFiles": [
+        {
+            "filename": "projects/ng-msg/package.json",
+            "type": "json"
+        }
+    ],
+    "bumpFiles": [
+        {
+            "filename": "projects/ng-msg/package.json",
+            "type": "json"
+        }
+    ]
+}
