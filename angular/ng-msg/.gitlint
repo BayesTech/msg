@@ -1,6 +1,5 @@
 [general]
 ignore=body-is-missing,T3
-
 ignore-stdin=true
 
 [CT1]
