@@ -44,3 +44,8 @@ testem.log
 # System Files
 .DS_Store
 Thumbs.db
+/angular/ng-msg/dist
+/angular/ng-msg/node_modules
+/csharp/.vs
+/csharp/bin
+/csharp/obj
