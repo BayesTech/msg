@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System.Threading.Tasks;
 
-namespace csharp_msg
+namespace CSharpMsg
 {
     public abstract class CSharpMsgEndpointServiceBase : ICSharpMsgEndpointService
     {

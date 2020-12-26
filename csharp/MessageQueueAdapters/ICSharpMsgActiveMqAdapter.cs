@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace csharp_msg.MessageQueueAdapters
+namespace CSharpMsg.MessageQueueAdapters
 {
     public interface ICSharpMsgActiveMqAdapter : ICSharpMsgMessageQueueAdapter
     {

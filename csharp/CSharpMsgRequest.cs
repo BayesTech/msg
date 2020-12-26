@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace csharp_msg
+namespace CSharpMsg
 {
     public class CSharpMsgRequest
     {

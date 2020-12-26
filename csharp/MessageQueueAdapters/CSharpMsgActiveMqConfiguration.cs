@@ -1,4 +1,4 @@
-﻿namespace csharp_msg.MessageQueueAdapters
+﻿namespace CSharpMsg.MessageQueueAdapters
 {
     public class CSharpMsgActiveMqConfiguration
     {

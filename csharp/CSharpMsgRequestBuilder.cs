@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace csharp_msg
+namespace CSharpMsg
 {
     public class CSharpMsgRequestBuilder
     {
