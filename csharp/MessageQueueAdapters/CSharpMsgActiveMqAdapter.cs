@@ -7,7 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace csharp_msg.MessageQueueAdapters
+namespace CSharpMsg.MessageQueueAdapters
 {
     public class CSharpMsgActiveMqAdapter : ICSharpMsgActiveMqAdapter
     {

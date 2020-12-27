@@ -1,4 +1,4 @@
-﻿namespace csharp_msg
+﻿namespace CSharpMsg
 {
     public enum CSharpMsgStatusCode
     {

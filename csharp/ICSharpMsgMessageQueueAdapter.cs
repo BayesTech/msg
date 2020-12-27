@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace csharp_msg
+namespace CSharpMsg
 {
     public interface ICSharpMsgMessageQueueAdapter
     {

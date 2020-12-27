@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace csharp_msg
+namespace CSharpMsg
 {
     public class CSharpMsgMessageQueueService : ICSharpMsgMessageQueueService
     {
