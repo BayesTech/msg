@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -31,7 +32,7 @@ namespace CSharpMsg.MessageQueueAdapters
         {
             _logger = logger;
             _activeMqConfiguration = activeMqConfiguration;
-            _producers = new Dictionary<string, IMessageProducer>();
+            _producers = new ConcurrentDictionary<string, IMessageProducer>();
             Initialise();
         }
 
@@ -62,7 +63,34 @@ namespace CSharpMsg.MessageQueueAdapters
             {
                 _logger.LogError(e, "Unable to create consumer");
             }
+        }
 
+        public string RegisterProducer(string suffix, CSharpMsgActiveMqType type)
+        {
+            string topicQueueName = _activeMqConfiguration.TopicQueueName + suffix;
+            if (!_producers.ContainsKey(topicQueueName))
+            {
+                IDestination destination = null;
+                if (type == CSharpMsgActiveMqType.Queue)
+                {
+                    destination = new ActiveMQQueue(topicQueueName);
+                }
+                else if (type == CSharpMsgActiveMqType.Topic)
+                {
+                    destination = new ActiveMQTopic(topicQueueName);
+                }
+
+                if (destination == null)
+                {
+                    _logger.LogError("Given CSharpMsgActiveMqType is not valid. Unable to create destination");
+                    return string.Empty;
+                }
+
+                _producers.Add(topicQueueName, _session.CreateProducer(destination));
+                return topicQueueName;
+            }
+
+            return topicQueueName;
         }
 
         public void UnregisterConsumer()
@@ -95,34 +123,45 @@ namespace CSharpMsg.MessageQueueAdapters
             }
         }
 
-        public void Publish(string suffix, CSharpMsgRequest request)
+        public bool Publish(string suffix, CSharpMsgActiveMqType type, CSharpMsgRequest request)
         {
-            string topicQueueName = _activeMqConfiguration.TopicQueueName + suffix;
-            if (!_producers.ContainsKey(topicQueueName))
+            string topicQueueName = RegisterProducer(suffix, type);
+            if (string.IsNullOrWhiteSpace(topicQueueName))
             {
-                _producers.Add(topicQueueName, _session.CreateProducer(new ActiveMQQueue(topicQueueName)));
+                _logger.LogError("Fail to publish request. Possible reason is unable to register producer. Please check the CSharpMsgActiveMqType.");
+                return false;
             }
 
-            string serialisedMessage = JsonConvert.SerializeObject(request, _jsonSettins);
-            ITextMessage message = _session.CreateTextMessage(serialisedMessage);
-            _producers[topicQueueName].Send(message, MsgDeliveryMode.NonPersistent, MsgPriority.Highest, TimeSpan.FromSeconds(5));
+            try
+            {
+                string serialisedMessage = JsonConvert.SerializeObject(request, _jsonSettins);
+                ITextMessage message = _session.CreateTextMessage(serialisedMessage);
+                _producers[topicQueueName].Send(message, MsgDeliveryMode.NonPersistent, MsgPriority.Highest, TimeSpan.FromSeconds(5));
+                return true;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Fail to publish request");
+                return false;
+            }
         }
 
-        public void PublishAndWait(string suffix, CSharpMsgRequest request, Action<CSharpMsgResponse> onResponseReceived)
+        public void PublishAndWait(string suffix, CSharpMsgActiveMqType type, CSharpMsgRequest request, Action<CSharpMsgResponse> onResponseReceived)
         {
             string topicQueueName = _activeMqConfiguration.TopicQueueName + suffix;
             _consumer = _session.CreateConsumer(_session.GetTopic(topicQueueName));
-            Publish(suffix, request);
-
-            ITextMessage message = (ITextMessage)_consumer.Receive(new TimeSpan(0, 1, 0));
-            if (message == null)
+            if(Publish(suffix, type, request))
             {
-                _logger.LogError("Timeout");
-                CSharpMsgResponse response = new CSharpMsgResponseBuilder().WithStatusCode(CSharpMsgStatusCode.Timeout).Build();
-                onResponseReceived(response);
-            }
+                ITextMessage message = (ITextMessage)_consumer.Receive(new TimeSpan(0, 1, 0));
+                if (message == null)
+                {
+                    _logger.LogError("Timeout");
+                    CSharpMsgResponse response = new CSharpMsgResponseBuilder().WithStatusCode(CSharpMsgStatusCode.Timeout).Build();
+                    onResponseReceived(response);
+                }
 
-            onResponseReceived(JsonConvert.DeserializeObject<CSharpMsgResponse>(message.Text, _jsonSettins));
+                onResponseReceived(JsonConvert.DeserializeObject<CSharpMsgResponse>(message.Text, _jsonSettins));
+            }
         }
 
         public void Subscribe(Action<CSharpMsgRequest> OnRequestReceived)
