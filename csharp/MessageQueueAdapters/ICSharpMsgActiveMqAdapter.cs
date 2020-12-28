@@ -4,9 +4,10 @@ namespace CSharpMsg.MessageQueueAdapters
 {
     public interface ICSharpMsgActiveMqAdapter : ICSharpMsgMessageQueueAdapter
     {
+        string RegisterProducer(string suffix, CSharpMsgActiveMqType type);
         void RegisterConsumer(string suffix);
         void UnregisterConsumer();
-        void Publish(string suffix, CSharpMsgRequest request);
-        void PublishAndWait(string suffix, CSharpMsgRequest request, Action<CSharpMsgResponse> onResponseReceived);
+        bool Publish(string suffix, CSharpMsgActiveMqType type, CSharpMsgRequest request);
+        void PublishAndWait(string suffix, CSharpMsgActiveMqType type, CSharpMsgRequest request, Action<CSharpMsgResponse> onResponseReceived);
     }
 }
