@@ -6,6 +6,7 @@ using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace CSharpMsg.MessageQueueAdapters
@@ -86,7 +87,7 @@ namespace CSharpMsg.MessageQueueAdapters
                     return string.Empty;
                 }
 
-                _producers.Add(topicQueueName, _session.CreateProducer(destination));
+                _producers[topicQueueName] = _session.CreateProducer(destination);
                 return topicQueueName;
             }
 
