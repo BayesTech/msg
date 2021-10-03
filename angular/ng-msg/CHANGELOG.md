@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## 1.4.0 (2021-10-03)
+
+
+### Features
+
+* Add csharp-msg ([8973917](https://github.com/BayesTech/msg/commit/897391785a6064043719167bd8a1ad92dba410ba))
+
+
+### Bug Fixes
+
+* Add or update producer ([bb29e55](https://github.com/BayesTech/msg/commit/bb29e555de24e909e8510e02c1fb795b74b6014b))
+* **csharp-msg:** Test fix ([8312aed](https://github.com/BayesTech/msg/commit/8312aed50cabc39d47adf29f32fe5123b87dc449))
+* Fix interface implementation errors ([4c70319](https://github.com/BayesTech/msg/commit/4c703190641b5b5ec3c69c56fb3ccbc790f9b3e7))
+
 ## 1.3.0 (2021-09-17)
 
 
