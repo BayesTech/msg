@@ -34,10 +34,9 @@ namespace CSharpMsg.MessageQueueAdapters
             _logger = logger;
             _activeMqConfiguration = activeMqConfiguration;
             _producers = new ConcurrentDictionary<string, IMessageProducer>();
-            Initialise();
         }
 
-        private void Initialise()
+        public void Initialise()
         {
             try
             {
@@ -50,6 +49,7 @@ namespace CSharpMsg.MessageQueueAdapters
             catch (Exception e)
             {
                 _logger.LogError(e, "Unable to create connection to ActiveMq");
+                throw;
             }
         }
 
@@ -63,6 +63,7 @@ namespace CSharpMsg.MessageQueueAdapters
             catch (Exception e)
             {
                 _logger.LogError(e, "Unable to create consumer");
+                throw;
             }
         }
 

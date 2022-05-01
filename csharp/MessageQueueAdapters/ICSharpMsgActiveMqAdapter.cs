@@ -4,6 +4,7 @@ namespace CSharpMsg.MessageQueueAdapters
 {
     public interface ICSharpMsgActiveMqAdapter : ICSharpMsgMessageQueueAdapter
     {
+        void Initialise();
         string RegisterProducer(string suffix, CSharpMsgActiveMqType type);
         void RegisterConsumer(string suffix);
         void UnregisterConsumer();
