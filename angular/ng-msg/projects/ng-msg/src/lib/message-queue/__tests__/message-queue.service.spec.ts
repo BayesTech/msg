@@ -52,7 +52,7 @@ const createStompMessage = (body: string) => {
     headers: new StompHeaders(),
     isBinaryBody: false,
     body: body,
-    binaryBody: undefined,
+    binaryBody: new Uint8Array(),
   };
 
   return message;
@@ -64,6 +64,7 @@ const createMockInjector = (messageQueueService: MessageQueueService) => {
     if (key.toString() === 'InjectionToken GET-route') {
       return messageQueueService;
     }
+    return undefined;
   };
 
   return mockedInjector;
@@ -132,7 +133,16 @@ describe('MessageQueueService', () => {
 
       service.process(message);
       expect(testService.process).toHaveBeenCalledOnceWith(
-        { body: 'content body', headers: { route: 'route', requestMethod: 0 } },
+        {
+          body: 'content body',
+          headers: {
+            route: 'route',
+            requestId: '',
+            requireResponse: false,
+            requestMethod: 0,
+            custom: Object({}),
+          },
+        },
         service
       );
     });

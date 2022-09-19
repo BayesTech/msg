@@ -17,6 +17,6 @@ export * from './lib/iframe/iframe-options';
 export * from './lib/iframe/iframe-service-base';
 
 export * from './lib/message-queue/message-queue.service';
-export * from './lib/message-queue/message-queue-configuration';
+export * from './lib/message-queue/message-queue-configuration-base';
 export * from './lib/message-queue/message-queue-options';
 export * from './lib/message-queue/message-queue-service-base';

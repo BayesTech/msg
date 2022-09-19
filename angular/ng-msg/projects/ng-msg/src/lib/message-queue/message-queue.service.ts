@@ -5,7 +5,7 @@ import {
   rxStompServiceFactory,
 } from '@stomp/ng2-stompjs';
 import { Subscription } from 'rxjs';
-import { MessageQueueConfiguration } from './message-queue-configuration';
+import { MessageQueueConfigurationBase } from './message-queue-configuration-base';
 import { MessageQueueOptions } from './message-queue-options';
 import { MessageQueueServiceBase } from './message-queue-service-base';
 import { Message as StompMessage } from '@stomp/stompjs';
@@ -18,10 +18,10 @@ import { NgMsgBaseService } from '../ng-msg-base-service';
   providedIn: 'root',
 })
 export class MessageQueueService extends NgMsgBaseService implements OnDestroy {
-  private _rxStompService: RxStompService;
-  private _subscription: Subscription;
-  private _routeServiceMapping: Map<string, MessageQueueServiceBase>;
-  private _messageQueueConfiguration: MessageQueueConfiguration;
+  private _rxStompService?: RxStompService;
+  private _subscription?: Subscription;
+  private _routeServiceMapping?: Map<string, MessageQueueServiceBase>;
+  private _messageQueueConfigurationBase?: MessageQueueConfigurationBase;
 
   constructor(
     private _injector: Injector,
@@ -37,9 +37,9 @@ export class MessageQueueService extends NgMsgBaseService implements OnDestroy {
 
   public subscribe(
     destination: string,
-    messageQueueConfiguration: MessageQueueConfiguration
+    messageQueueConfigurationBase: MessageQueueConfigurationBase
   ): Subscription {
-    this._messageQueueConfiguration = messageQueueConfiguration;
+    this._messageQueueConfigurationBase = messageQueueConfigurationBase;
     this._rxStompService = rxStompServiceFactory(
       this.buildConfiguration(this._options.isDebug)
     );
@@ -59,10 +59,16 @@ export class MessageQueueService extends NgMsgBaseService implements OnDestroy {
         request.headers.route,
         request.headers.requestMethod
       );
-      if (this._routeServiceMapping.has(routeKey)) {
-        const service: MessageQueueServiceBase =
+      if (this._routeServiceMapping?.has(routeKey)) {
+        const service: MessageQueueServiceBase | undefined =
           this._routeServiceMapping.get(routeKey);
-        await service.process(request, this);
+        if (service) {
+          await service.process(request, this);
+        } else {
+          throw new Error(
+            `Route ${routeKey} is registered with undefined service/processor`
+          );
+        }
       } else {
         throw new Error(`Route ${routeKey} in message is not registered`);
       }
@@ -92,24 +98,28 @@ export class MessageQueueService extends NgMsgBaseService implements OnDestroy {
       destination: destination,
       body: JSON.stringify(message),
     };
-    this._rxStompService.publish(publishParams);
+    this._rxStompService?.publish(publishParams);
   };
 
   public publishAndWaitForResponse = async (
     destination: string,
     message: NgMsgRequest | NgMsgResponse,
     timeoutInMs: number = 10000
-  ): Promise<NgMsgResponse> => {
-    this.publish(destination, message);
-    return this._rxStompService
-      .watch(destination)
-      .pipe(
-        map((response) => JSON.parse(response.body) as NgMsgResponse),
-        filter((response) => this.responseFilter(message, response)),
-        timeout(timeoutInMs),
-        first()
-      )
-      .toPromise();
+  ): Promise<NgMsgResponse | undefined> => {
+    if (this._rxStompService) {
+      this.publish(destination, message);
+      return this._rxStompService
+        .watch(destination)
+        .pipe(
+          map((response) => JSON.parse(response.body) as NgMsgResponse),
+          filter((response) => this.responseFilter(message, response)),
+          timeout(timeoutInMs),
+          first()
+        )
+        .toPromise();
+    } else {
+      throw new Error('rxStomService is not initialised');
+    }
   };
 
   private responseFilter = (
@@ -127,7 +137,7 @@ export class MessageQueueService extends NgMsgBaseService implements OnDestroy {
     this._options.injectionTokens.forEach((injectionToken) => {
       const service: MessageQueueServiceBase =
         this._injector.get(injectionToken);
-      this._routeServiceMapping.set(
+      this._routeServiceMapping?.set(
         this.getRouteKey(service.route, service.requestMethod),
         service
       );
@@ -139,10 +149,11 @@ export class MessageQueueService extends NgMsgBaseService implements OnDestroy {
   ): InjectableRxStompConfig {
     let injectableRxStompConfig: InjectableRxStompConfig =
       new InjectableRxStompConfig();
-    injectableRxStompConfig.brokerURL = this._messageQueueConfiguration.wssUrl;
+    injectableRxStompConfig.brokerURL =
+      this._messageQueueConfigurationBase?.wssUrl;
     injectableRxStompConfig.connectHeaders = {
-      login: this._messageQueueConfiguration.username,
-      passcode: this._messageQueueConfiguration.password,
+      login: this._messageQueueConfigurationBase?.username ?? '',
+      passcode: this._messageQueueConfigurationBase?.password ?? '',
     };
     injectableRxStompConfig.heartbeatIncoming = 0;
     injectableRxStompConfig.heartbeatOutgoing = 20000;

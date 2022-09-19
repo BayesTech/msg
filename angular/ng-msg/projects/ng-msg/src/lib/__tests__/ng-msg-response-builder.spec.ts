@@ -6,7 +6,7 @@ describe('NgMsgResponseBuilder', () => {
   it('should have default header', () => {
     const builder = new NgMsgResponseBuilder();
 
-    const expectedHeader = new NgMsgResponseHeaders();
+    const expectedHeader = new NgMsgResponseHeaders(NgMsgStatusCode.Ok);
     expectedHeader.statusCode = NgMsgStatusCode.Ok;
     expectedHeader.custom = new Map<string, string>();
 
