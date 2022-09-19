@@ -1,0 +1,53 @@
+pool:
+  name: Hosted VS2017
+  demands: npm
+
+steps:
+  - task: Npm@1
+    displayName: "Install Packages"
+    inputs:
+      workingDir: "."
+      verbose: false
+      customEndpoint: "Gitlab Npm Registry"
+
+  - powershell: |
+      git config --global user.email "developer@bayestech.com.au"
+      git config --global user.name "BayesTech-CI"
+
+      npm run release
+
+      cat projects/ng-msg/package.json
+    workingDirectory: "."
+    displayName: "Update version"
+
+  - task: Npm@1
+    displayName: "Install Angular Cli"
+    inputs:
+      command: custom
+      verbose: false
+      customCommand: "install -g @angular/cli"
+
+  - task: Npm@1
+    displayName: Build
+    inputs:
+      command: custom
+      workingDir: "."
+      verbose: false
+      customCommand: "run build --prod ng-msg"
+
+  - task: Npm@1
+    displayName: Publish
+    inputs:
+      command: publish
+      workingDir: "./dist/ng-msg"
+      verbose: false
+      publishEndpoint: "Gitlab Npm Registry"
+
+  - task: PowerShell@2
+    inputs:
+      targetType: "inline"
+      script: |
+        $version = (Get-Content projects/ng-msg/package.json) -join "`n" | ConvertFrom-Json | Select -ExpandProperty "version"
+        git tag ng-msg-$version
+        git push ng-msg-$version
+        git push  https://$(GITHUB_USERNAME):$(GITHUB_PASSWORD)@github.com/BayesTech/msg.git --follow-tags HEAD:$(Build.SourceBranchName)
