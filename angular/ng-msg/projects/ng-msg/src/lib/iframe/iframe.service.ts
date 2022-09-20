@@ -1,5 +1,5 @@
 import { Injectable, Injector, OnDestroy } from '@angular/core';
-import { fromEvent, Subscription } from 'rxjs';
+import { fromEvent, lastValueFrom, Subscription } from 'rxjs';
 import { filter, first, timeout } from 'rxjs/operators';
 import { NgMsgBaseService } from '../ng-msg-base-service';
 import { NgMsgRequest } from '../ng-msg-request';
@@ -13,8 +13,11 @@ import { IframeServiceBase } from './iframe-service-base';
 export class IframeService extends NgMsgBaseService implements OnDestroy {
   public defaultTargetUri: string;
   public defaultTargetWindow: Window;
-  private _subscription: Subscription;
-  private _routeServiceMapping: Map<string, IframeServiceBase>;
+  private _subscription?: Subscription;
+  private _routeServiceMapping: Map<string, IframeServiceBase> = new Map<
+    string,
+    IframeServiceBase
+  >();
 
   constructor(private _injector: Injector, private _options: IframeOptions) {
     super();
@@ -30,7 +33,7 @@ export class IframeService extends NgMsgBaseService implements OnDestroy {
   public publish = (
     message: NgMsgRequest | NgMsgResponse,
     targetUri?: string,
-    targetWindow?: Window | MessageEventSource
+    targetWindow?: Window | MessageEventSource | null
   ): void => {
     if (targetUri && targetWindow) {
       (targetWindow as Window).postMessage(message, targetUri);
@@ -46,15 +49,15 @@ export class IframeService extends NgMsgBaseService implements OnDestroy {
     targetUri?: string,
     targetWindow?: Window,
     timeoutInMs: number = 10000
-  ): Promise<Event> => {
+  ): Promise<Event | undefined> => {
     this.publish(message, targetUri, targetWindow);
-    return fromEvent(window, 'message')
-      .pipe(
+    return await lastValueFrom(
+      fromEvent(window, 'message').pipe(
         filter((event) => this.responseFilter(message, event)),
         timeout(timeoutInMs),
         first()
       )
-      .toPromise();
+    );
   };
 
   private responseFilter = (
@@ -93,9 +96,9 @@ export class IframeService extends NgMsgBaseService implements OnDestroy {
         request.headers.requestMethod
       );
       if (this._routeServiceMapping.has(routeKey)) {
-        const service: IframeServiceBase =
+        const service: IframeServiceBase | undefined =
           this._routeServiceMapping.get(routeKey);
-        await service.process(request, this);
+        await service?.process(request, this);
       } else if (
         !(messageEvent.source instanceof MessagePort) ||
         !(messageEvent.source instanceof ServiceWorker)
@@ -112,7 +115,7 @@ export class IframeService extends NgMsgBaseService implements OnDestroy {
   public unsubscribe = () => {
     if (this._subscription) {
       this._subscription.unsubscribe();
-      this._subscription = null;
+      this._subscription = undefined;
     }
   };
 
