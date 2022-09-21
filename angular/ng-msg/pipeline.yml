@@ -6,9 +6,9 @@ steps:
   - task: Npm@1
     displayName: "Install Packages"
     inputs:
-      workingDir: "."
-      verbose: false
-      customEndpoint: "Gitlab Npm Registry"
+      command: "install"
+      workingDir: "./angular/ng-msg"
+      verbose: true
 
   - powershell: |
       git config --global user.email "developer@bayestech.com.au"
@@ -17,22 +17,22 @@ steps:
       npm run release
 
       cat projects/ng-msg/package.json
-    workingDirectory: "."
+    workingDirectory: "./angular/ng-msg"
     displayName: "Update version"
 
   - task: Npm@1
     displayName: "Install Angular Cli"
     inputs:
       command: custom
-      verbose: false
+      verbose: true
       customCommand: "install -g @angular/cli"
 
   - task: Npm@1
     displayName: Build
     inputs:
       command: custom
-      workingDir: "."
-      verbose: false
+      workingDir: "./angular/ng-msg"
+      verbose: true
       customCommand: "run build --prod ng-msg"
 
   - task: Npm@1
