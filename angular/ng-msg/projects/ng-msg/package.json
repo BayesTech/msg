@@ -1,6 +1,6 @@
 {
   "name": "ng-msg",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "peerDependencies": {
     "@angular/common": "^14.2.0",
     "@angular/core": "^14.2.0"
