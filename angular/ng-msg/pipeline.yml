@@ -60,6 +60,7 @@ stages:
           - task: PowerShell@2
             inputs:
               targetType: "inline"
+              workingDirectory: "./angular/ng-msg"
               script: |
                 $version = (Get-Content projects/ng-msg/package.json) -join "`n" | ConvertFrom-Json | Select -ExpandProperty "version"
                 git tag ng-msg-$version
