@@ -1,56 +1,67 @@
-pool:
-  name: windows-2019
-  demands: npm
+resources:
+  repositories:
+    - repository: self
+      type: git
+      ref: develop
+      trigger:
+        branches:
+          include:
+            - ng-msg-14
+stages:
+  - stage: Build
+    jobs:
+      - job: Job_1
+        displayName: Agent job 1
+        pool:
+          vmImage: windows-2019
+        workspace:
+          clean: all
+        steps:
+          - task: Npm@1
+            displayName: "Install Packages"
+            inputs:
+              command: "install"
+              workingDir: "./angular/ng-msg"
+              verbose: true
 
-trigger:
-  - ng-msg-14
+          - powershell: |
+              git config --global user.email "developer@bayestech.com.au"
+              git config --global user.name "BayesTech-CI"
 
-steps:
-  - task: Npm@1
-    displayName: "Install Packages"
-    inputs:
-      command: "install"
-      workingDir: "./angular/ng-msg"
-      verbose: true
+              npm run release
 
-  - powershell: |
-      git config --global user.email "developer@bayestech.com.au"
-      git config --global user.name "BayesTech-CI"
+              cat projects/ng-msg/package.json
+            workingDirectory: "./angular/ng-msg"
+            displayName: "Update version"
 
-      npm run release
+          - task: Npm@1
+            displayName: "Install Angular Cli"
+            inputs:
+              command: custom
+              verbose: true
+              customCommand: "install -g @angular/cli"
 
-      cat projects/ng-msg/package.json
-    workingDirectory: "./angular/ng-msg"
-    displayName: "Update version"
+          - task: Npm@1
+            displayName: Build
+            inputs:
+              command: custom
+              workingDir: "./angular/ng-msg"
+              verbose: true
+              customCommand: "run build --prod ng-msg"
 
-  - task: Npm@1
-    displayName: "Install Angular Cli"
-    inputs:
-      command: custom
-      verbose: true
-      customCommand: "install -g @angular/cli"
+          - task: Npm@1
+            inputs:
+              command: "publish"
+              workingDir: "./angular/ng-msg/dist/ng-msg"
+              publishRegistry: useExternalRegistry
+              publishEndpoint: "NPM"
+              verbose: true
 
-  - task: Npm@1
-    displayName: Build
-    inputs:
-      command: custom
-      workingDir: "./angular/ng-msg"
-      verbose: true
-      customCommand: "run build --prod ng-msg"
-
-  - task: Npm@1
-    inputs:
-      command: "publish"
-      workingDir: "./angular/ng-msg/dist/ng-msg"
-      publishRegistry: useExternalRegistry
-      publishEndpoint: "NPM"
-      verbose: true
-
-  - task: PowerShell@2
-    inputs:
-      targetType: "inline"
-      script: |
-        $version = (Get-Content projects/ng-msg/package.json) -join "`n" | ConvertFrom-Json | Select -ExpandProperty "version"
-        git tag ng-msg-$version
-        git push ng-msg-$version
-        git push  https://$(GITHUB_USERNAME):$(GITHUB_PASSWORD)@github.com/BayesTech/msg.git --follow-tags HEAD:$(Build.SourceBranchName)
+          - task: PowerShell@2
+            inputs:
+              targetType: "inline"
+              script: |
+                $version = (Get-Content projects/ng-msg/package.json) -join "`n" | ConvertFrom-Json | Select -ExpandProperty "version"
+                git tag ng-msg-$version
+                git push ng-msg-$version
+                git push  https://$(GITHUB_USERNAME):$(GITHUB_PASSWORD)@github.com/BayesTech/msg.git --follow-tags HEAD:$(Build.SourceBranchName)
