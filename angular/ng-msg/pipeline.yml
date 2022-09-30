@@ -17,12 +17,13 @@ stages:
         workspace:
           clean: all
         steps:
-          - task: Npm@1
+          - task: PowerShell@2
             displayName: "Install Packages"
             inputs:
-              command: "install"
               workingDir: "./angular/ng-msg"
-              verbose: true
+              targetType: "inline"
+              script: |
+                yarn install
 
           - powershell: |
               git config --global user.email "developer@bayestech.com.au"
