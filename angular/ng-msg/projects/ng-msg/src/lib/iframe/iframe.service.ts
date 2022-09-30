@@ -12,7 +12,7 @@ import { IframeServiceBase } from './iframe-service-base';
 })
 export class IframeService extends NgMsgBaseService implements OnDestroy {
   public defaultTargetUri: string;
-  public defaultTargetWindow: Window;
+  public defaultTargetWindow?: Window;
   private _subscription?: Subscription;
   private _routeServiceMapping: Map<string, IframeServiceBase> = new Map<
     string,
