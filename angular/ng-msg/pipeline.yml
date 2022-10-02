@@ -20,7 +20,7 @@ stages:
           - task: PowerShell@2
             displayName: "Install Packages"
             inputs:
-              workingDir: "./angular/ng-msg"
+              workingDirectory: "./angular/ng-msg"
               targetType: "inline"
               script: |
                 yarn install
